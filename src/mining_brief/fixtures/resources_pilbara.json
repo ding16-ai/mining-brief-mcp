@@ -1,0 +1,24 @@
+{
+  "fixture_note": "示例 fixture。source_url 为 PLS 2025-06 资源量更新公告，数值取公告披露的 M+I+I 合计；未含 Indicated/Inferred 拆分，请以官方公告为准。",
+  "project": "Pilgangoora Operation (Pilbara Minerals, ASX: PLS)",
+  "commodity": "lithium",
+  "effective_date": "2025-06-11",
+  "rows": [
+    {
+      "category": "Total",
+      "ore_mt": 446.0,
+      "grade": 1.28,
+      "grade_unit": "%",
+      "contained_metal": 5.71,
+      "contained_unit": "Mt Li2O"
+    }
+  ],
+  "source_url": "https://investorpa.com/announcement-pdf/20250611/147372.pdf",
+  "source_pages": [],
+  "confidence": 0.6,
+  "warnings": [
+    "示例 fixture：仅含 2025-06-11 公告披露的 Measured+Indicated+Inferred 合计资源量（446 Mt @ 1.28% Li2O）。",
+    "未提供 Indicated / Inferred 拆分，实际使用时请从官方公告或 NI 43-101 全文抽取。",
+    "contained_metal 为由 ore_mt × grade 推导的计算值，非公告原文数字。"
+  ]
+}

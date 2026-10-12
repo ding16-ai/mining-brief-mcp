@@ -1,0 +1,26 @@
+{
+  "fixture_note": "示例 fixture。标题与摘要为演示用占位内容，url 指向站点首页而非具体文章；联网模式下 mining-news-mcp 会改从 Google News RSS 实时检索。",
+  "articles": [
+    {
+      "title": "[示例] Pilbara 锂矿项目发布季度运营更新",
+      "url": "https://www.mining.com/",
+      "source": "示例数据",
+      "published": "",
+      "summary": "占位内容：用于演示离线链路下的新闻摘要渲染。真实标题请在联网模式运行获取。"
+    },
+    {
+      "title": "[示例] Pilbara 地区锂精矿现货价格区间震荡",
+      "url": "https://www.mining.com/",
+      "source": "示例数据",
+      "published": "",
+      "summary": "占位内容：用于演示价格类新闻的引用标注格式。"
+    },
+    {
+      "title": "[示例] Pilbara 锂矿扩产项目进入可行性研究阶段",
+      "url": "https://www.mining.com/",
+      "source": "示例数据",
+      "published": "",
+      "summary": "占位内容：用于演示项目进展类新闻的渲染。"
+    }
+  ]
+}

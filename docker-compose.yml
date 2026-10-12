@@ -1,0 +1,62 @@
+# 一键起环境：docker compose up --build
+# 目标：新机器上 5 分钟内能跑出第一份简报。
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: mining-brief-mcp:0.1.0
+    working_dir: /app
+    env_file:
+      - .env
+    environment:
+      MINING_BRIEF_CACHE_DIR: /app/data/cache
+      PYTHONPATH: /app/src
+      PYTHONUNBUFFERED: "1"
+    volumes:
+      - ./data:/app/data
+      - ./out:/app/out
+    # 默认动作：跑一次完整简报生成
+    command: ["python", "-m", "mining_brief.cli", "brief", "生成一份关于 Pilbara 锂矿的今日简报"]
+
+  # 单独调试某个 MCP server（stdio 需 -i 保持 stdin 打开）
+  news:
+    image: mining-brief-mcp:0.1.0
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /app
+    env_file:
+      - .env
+    environment:
+      PYTHONPATH: /app/src
+    stdin_open: true
+    tty: true
+    command: ["python", "-m", "mining_brief.servers.news_server"]
+    profiles: ["servers"]
+
+  pdf:
+    image: mining-brief-mcp:0.1.0
+    working_dir: /app
+    env_file:
+      - .env
+    environment:
+      PYTHONPATH: /app/src
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./data:/app/data
+    command: ["python", "-m", "mining_brief.servers.pdf_server"]
+    profiles: ["servers"]
+
+  price:
+    image: mining-brief-mcp:0.1.0
+    working_dir: /app
+    env_file:
+      - .env
+    environment:
+      PYTHONPATH: /app/src
+    stdin_open: true
+    tty: true
+    command: ["python", "-m", "mining_brief.servers.price_server"]
+    profiles: ["servers"]

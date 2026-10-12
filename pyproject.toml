@@ -1,0 +1,56 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mining-brief-mcp"
+version = "0.1.0"
+description = "MCP-based daily briefing agent for mining projects (矿权日报 Agent)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "dj" }]
+keywords = ["mcp", "agent", "mining", "llm", "ni43-101"]
+
+dependencies = [
+  # 固定 1.x：mcp 2.x 把 FastMCP 更名为 MCPServer，且客户端字段改为 snake_case、
+  # call_tool 出错时改抛异常。生态（Claude Desktop / Cursor）与公开文档目前仍以 1.x 为主，
+  # 为保持"新机器 5 分钟跑起来"的稳定性，这里显式锁定 <2。迁移到 2.x 见 docs/architecture.md。
+  "mcp>=1.2.0,<2",
+  "httpx>=0.27.0",
+  "feedparser>=6.0.11",
+  "pdfplumber>=0.11.0",
+  "pydantic>=2.7.0",
+  "openai>=1.40.0",
+  "python-dotenv>=1.0.1",
+  "tenacity>=8.3.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0.0",
+  "pytest-asyncio>=0.23.0",
+  "ruff>=0.6.0",
+]
+
+[project.scripts]
+mining-brief = "mining_brief.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+mining_brief = ["fixtures/*.json"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = "-q"

@@ -1,0 +1,31 @@
+{
+  "_comment": "把本文件的 mcpServers 段落合并进 Claude Desktop 的 claude_desktop_config.json（或 Cursor 的 mcp.json）。请把两处 /ABSOLUTE/PATH/TO/mining-brief-mcp 替换成你的真实绝对路径；python 建议填虚拟环境解释器（如 .../mining-brief-mcp/.venv/Scripts/python.exe）。",
+  "mcpServers": {
+    "mining-news": {
+      "command": "python",
+      "args": ["-m", "mining_brief.servers.news_server"],
+      "env": {
+        "PYTHONPATH": "/ABSOLUTE/PATH/TO/mining-brief-mcp/src",
+        "MINING_BRIEF_OFFLINE": "false"
+      }
+    },
+    "mineral-pdf": {
+      "command": "python",
+      "args": ["-m", "mining_brief.servers.pdf_server"],
+      "env": {
+        "PYTHONPATH": "/ABSOLUTE/PATH/TO/mining-brief-mcp/src",
+        "LLM_BASE_URL": "https://api.deepseek.com",
+        "LLM_API_KEY": "sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "LLM_MODEL": "deepseek-chat"
+      }
+    },
+    "lme-price": {
+      "command": "python",
+      "args": ["-m", "mining_brief.servers.price_server"],
+      "env": {
+        "PYTHONPATH": "/ABSOLUTE/PATH/TO/mining-brief-mcp/src",
+        "MINING_BRIEF_OFFLINE": "false"
+      }
+    }
+  }
+}
