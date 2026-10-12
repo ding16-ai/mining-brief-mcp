@@ -1,0 +1,33 @@
+{
+  "mcpServers": {
+    "mining-news": {
+      "type": "stdio",
+      "command": "python",
+      "args": ["-m", "mining_brief.servers.news_server"],
+      "env": {
+        "PYTHONPATH": "${CLAUDE_PROJECT_DIR:-.}/src",
+        "MINING_BRIEF_OFFLINE": "${MINING_BRIEF_OFFLINE:-false}"
+      }
+    },
+    "mineral-pdf": {
+      "type": "stdio",
+      "command": "python",
+      "args": ["-m", "mining_brief.servers.pdf_server"],
+      "env": {
+        "PYTHONPATH": "${CLAUDE_PROJECT_DIR:-.}/src",
+        "LLM_BASE_URL": "${LLM_BASE_URL:-https://api.deepseek.com}",
+        "LLM_API_KEY": "${LLM_API_KEY}",
+        "LLM_MODEL": "${LLM_MODEL:-deepseek-chat}"
+      }
+    },
+    "lme-price": {
+      "type": "stdio",
+      "command": "python",
+      "args": ["-m", "mining_brief.servers.price_server"],
+      "env": {
+        "PYTHONPATH": "${CLAUDE_PROJECT_DIR:-.}/src",
+        "MINING_BRIEF_OFFLINE": "${MINING_BRIEF_OFFLINE:-false}"
+      }
+    }
+  }
+}

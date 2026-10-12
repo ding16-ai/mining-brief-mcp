@@ -50,6 +50,18 @@ src/mining_brief/
 tests/          # 默认离线；需要联网的测试请显式标注
 ```
 
+## Claude Code 集成
+
+仓库已按 Claude Code 的项目约定配好，克隆下来即可用：
+
+| 文件 | 作用 |
+| --- | --- |
+| `.mcp.json` | 项目级 MCP server 配置（三个 server 都在里面）。用 `${VAR:-default}` 做变量展开，**不需要改绝对路径**；`LLM_API_KEY` 从环境变量取。首次使用需在 Claude Code 里批准（工作区信任）。 |
+| `.claude/settings.json` | 项目共享权限：放行本项目自己的命令；禁读 `.env`、禁 `git push --force` / `git reset --hard` / `rm -rf`。 |
+| `.claude/commands/verify.md` | `/verify` 斜杠命令，跑完整提交前自检。 |
+| `.claude/agents/data-source-reviewer.md` | 数据来源审计子代理。改动 `servers/` 取数逻辑或 `fixtures/` 时用它复查「来源标注是否与实际取数路径一致」。 |
+| `.claude/settings.local.json` | 个人设置，已在 `.gitignore` 中排除，**不要提交**。 |
+
 ## 硬规则（改代码时不要破坏）
 
 1. **取证与成文分离**。成文阶段只能使用 `evidence` 里的数据，不允许模型补充外部知识。

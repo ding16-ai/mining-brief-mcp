@@ -125,6 +125,7 @@ mining-brief-mcp/
 | **容器化** | `Dockerfile` + `docker-compose.yml`，`docker compose up --build` 一键起 |
 | **文档** | 架构决策、数据源与已知局限、CHANGELOG、CLAUDE.md（AI 协作者约定） |
 | **协作** | Issue 模板（bug / feature / 数据源问题）、PR 模板（含硬规则自查清单） |
+| **AI 协作约定** | `CLAUDE.md` + `.mcp.json` + `.claude/`（共享权限、`/verify` 命令、数据来源审计子代理） |
 
 提交前跑一条命令即可对齐 CI：
 
@@ -153,9 +154,29 @@ make check    # lint + typecheck + test + 离线自检
 - `fixtures/` 中的价格序列是**合成数据**，新闻是**占位内容**，仅用于离线演示。
 - NI 43-101 的复杂表格存在错位风险，抽取结果**须由合资格人士（QP）复核**。
 
+## 在 Claude Code 中使用
+
+仓库根目录已带 `.mcp.json`，**不需要改任何路径** —— 三个 server 全部通过
+`${VAR:-default}` 做变量展开，`LLM_API_KEY` 直接从环境变量取。
+
+```bash
+pip install -e ".[dev]"     # 先装依赖（也可跳过，.mcp.json 会兜底设 PYTHONPATH）
+claude                      # 在仓库根目录启动，首次会提示批准项目级 MCP server
+```
+
+批准后可直接对话调用，或用仓库自带的两个约定：
+
+- `/verify` —— 跑完整提交前自检（ruff + 格式 + mypy + pytest + 离线自检）
+- `data-source-reviewer` 子代理 —— 复查「来源标注是否与实际取数路径一致」，
+  改动 `servers/` 取数逻辑或 `fixtures/` 时值得跑一遍
+
+项目约定写在 [`CLAUDE.md`](CLAUDE.md)，权限与安全边界在
+[`.claude/settings.json`](.claude/settings.json)（禁读 `.env`、禁 `git push --force` 等）。
+
 ## 在 Claude Desktop / Cursor 中使用
 
-把 [`mcp/claude_desktop_config.json`](mcp/claude_desktop_config.json) 里的 `mcpServers`
+这两个客户端不支持 `.mcp.json`，需要手动合并：把
+[`mcp/claude_desktop_config.json`](mcp/claude_desktop_config.json) 里的 `mcpServers`
 合并进你的客户端配置，并把绝对路径替换成实际路径。重启客户端后即可直接对话调用这三个 server。
 
 ## 免责声明

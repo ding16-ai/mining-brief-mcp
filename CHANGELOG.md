@@ -16,6 +16,17 @@
 - **打包校验脚本** `scripts/check_wheel.py`：确认 fixture 数据确实被打进 wheel。
 - `.pre-commit-config.yaml`、`.editorconfig`、`.dockerignore`、`LICENSE`（MIT）。
 - `.github/ISSUE_TEMPLATE/` 与 `.github/PULL_REQUEST_TEMPLATE.md`。
+- **Claude Code 项目约定**（克隆即可用，无需改绝对路径）：
+  - `.mcp.json` —— 项目级 MCP server 配置，三个 server 全部通过 `${VAR:-default}` 做变量展开，
+    `LLM_API_KEY` 从环境变量取。
+  - `.claude/settings.json` —— 共享权限：放行本项目自己的命令，禁读 `.env`，
+    禁 `git push --force` / `git reset --hard` / `rm -rf`。
+  - `.claude/commands/verify.md` —— `/verify` 命令，跑完整提交前自检。
+  - `.claude/agents/data-source-reviewer.md` —— 数据来源审计子代理，
+    复查「来源标注是否与实际取数路径一致」。
+- **配置自检测试** `tests/test_claude_config.py`：按 `.mcp.json` 真连三个 server 验证配置可用，
+  并检查权限规则没有使用「会被静默忽略的路径规则工具」。测试数 66 → 74。
+- README 增加「在 Claude Code 中使用」章节。
 
 ### 变更
 

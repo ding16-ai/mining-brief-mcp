@@ -8,6 +8,10 @@ venv/
 
 .env
 
+# Claude Code 的个人设置。Claude Code 首次写入该文件时会自动把它加进全局
+# gitignore，但手动创建的不会 —— 所以在这里显式排除。
+.claude/settings.local.json
+
 # 运行时缓存与下载物（保留目录，忽略内容）
 data/cache/
 data/pdfs/
