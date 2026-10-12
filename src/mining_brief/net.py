@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 import httpx
 
@@ -55,7 +56,9 @@ def get_bytes(url: str, *, timeout: float | None = None) -> bytes:
         return response.content
 
 
-def get_json(url: str, *, params: dict | None = None, timeout: float | None = None) -> dict:
+def get_json(
+    url: str, *, params: dict[str, Any] | None = None, timeout: float | None = None
+) -> dict[str, Any]:
     settings = get_settings()
     if settings.offline:
         raise OfflineMode(f"离线模式已开启，拒绝请求 {url}")
@@ -67,4 +70,9 @@ def get_json(url: str, *, params: dict | None = None, timeout: float | None = No
     ) as client:
         response = client.get(url, params=params)
         response.raise_for_status()
-        return response.json()
+        payload = response.json()
+        # 明确收口：上游返回的不是 JSON 对象时立刻报错，
+        # 否则一个 Any 会顺着调用链一路传下去，类型标注就形同虚设。
+        if not isinstance(payload, dict):
+            raise ValueError(f"响应不是 JSON 对象（{type(payload).__name__}）：{url}")
+        return payload

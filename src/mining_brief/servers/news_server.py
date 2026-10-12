@@ -52,39 +52,51 @@ def _to_iso(entry: Any) -> str:
         parsed = getattr(entry, attr, None)
         if parsed:
             try:
-                return datetime(*parsed[:6], tzinfo=timezone.utc).date().isoformat()
+                # 显式解包前 6 个字段再传 tzinfo。feedparser 给的是 9 元组
+                # struct_time，用 *parsed[:6] 展开会让位置参数与 tzinfo 撞车。
+                year, month, day, hour, minute, second = parsed[:6]
+                stamp = datetime(year, month, day, hour, minute, second, tzinfo=timezone.utc)
+                return stamp.date().isoformat()
             except (TypeError, ValueError):
                 continue
     raw = getattr(entry, "published", "") or ""
     return raw[:10] if len(raw) >= 10 else ""
 
 
-def _load_fixture(query: str, days: int) -> list[dict]:
+def _load_fixture(query: str, days: int) -> list[dict[str, Any]]:
     """离线兜底：读取包内 fixture，按 query 关键字做粗筛。"""
     import json
 
     path = FIXTURES_DIR / "news_pilbara.json"
     if not path.exists():
         return []
-    payload = json.loads(path.read_text(encoding="utf-8"))
-    items = payload.get("articles", payload if isinstance(payload, list) else [])
+    payload: Any = json.loads(path.read_text(encoding="utf-8"))
+    # fixture 允许写成 {"articles": [...]} 或裸数组两种形状，统一成列表并剔除非对象项。
+    raw = payload.get("articles", []) if isinstance(payload, dict) else payload
+    items = [item for item in raw if isinstance(item, dict)] if isinstance(raw, list) else []
+    if not items:
+        return []
+
     tokens = [t for t in re.split(r"\W+", query.lower()) if len(t) > 2]
     if not tokens:
         return items[:20]
     hits = [
-        a
-        for a in items
-        if any(t in (a.get("title", "") + a.get("summary", "")).lower() for t in tokens)
+        article
+        for article in items
+        if any(
+            token in (str(article.get("title", "")) + str(article.get("summary", ""))).lower()
+            for token in tokens
+        )
     ]
     # 离线 fixture 只有少量条目，过度筛选会让 demo 变成空简报；
     # 命中不足 2 条时直接返回全部，宁可宽泛也不要空。
     return hits if len(hits) >= 2 else items[:20]
 
 
-def _fetch_from_rss(url: str) -> list[dict]:
+def _fetch_from_rss(url: str) -> list[dict[str, Any]]:
     raw = net.get_text(url)
     parsed = feedparser.parse(raw)
-    items: list[dict] = []
+    items: list[dict[str, Any]] = []
     for entry in parsed.entries:
         source = ""
         if getattr(entry, "source", None) is not None:
@@ -102,7 +114,7 @@ def _fetch_from_rss(url: str) -> list[dict]:
 
 
 @mcp.tool()
-def search(query: str, days: int = 7) -> list[dict]:
+def search(query: str, days: int = 7) -> list[dict[str, Any]]:
     """按关键词检索最近 N 天的矿业新闻。
 
     Args:
@@ -116,13 +128,13 @@ def search(query: str, days: int = 7) -> list[dict]:
     days = max(1, min(int(days), 90))
     key = cache.make_key("news", query.lower().strip(), days)
 
-    def loader() -> list[dict]:
+    def loader() -> list[dict[str, Any]]:
         attempts = [
             (GOOGLE_NEWS_RSS.format(query=query.replace(" ", "+")), "Google News"),
             (MINING_COM_RSS, "mining.com"),
             *FALLBACK_FEEDS,
         ]
-        collected: list[dict] = []
+        collected: list[dict[str, Any]] = []
         errors: list[str] = []
         for url, label in attempts:
             try:
@@ -153,7 +165,7 @@ def search(query: str, days: int = 7) -> list[dict]:
 
 
 @mcp.tool()
-def fetch_article(url: str) -> dict:
+def fetch_article(url: str) -> dict[str, Any]:
     """抓取单篇文章正文（纯文本，按 6000 字符截断）。
 
     Args:
@@ -167,7 +179,7 @@ def fetch_article(url: str) -> dict:
 
     key = cache.make_key("article", url)
 
-    def loader() -> dict:
+    def loader() -> dict[str, Any]:
         html = net.get_text(url)
         text = _strip_html(html)
         truncated = len(text) > MAX_ARTICLE_CHARS

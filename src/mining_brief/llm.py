@@ -5,9 +5,10 @@ from __future__ import annotations
 import json
 import logging
 import re
-from typing import Any
+from typing import Any, cast
 
-from openai import OpenAI
+from openai import OpenAI, omit
+from openai.types.chat import ChatCompletionMessageParam, ChatCompletionToolParam
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 from mining_brief.config import Settings, get_settings
@@ -22,28 +23,32 @@ class LLMUnavailable(RuntimeError):
 
 
 def _extract_json(text: str) -> dict[str, Any]:
-    """容错地从模型输出里抠出 JSON 对象。"""
+    """容错地从模型输出里抠出 JSON 对象。
+
+    依次尝试三种候选：整段文本 → ```json 代码块 → 首尾花括号之间的片段。
+    全部失败（或解析出来不是对象）时抛 ``LLMUnavailable``，由调用方降级。
+    """
     text = text.strip()
-    try:
-        return json.loads(text)
-    except json.JSONDecodeError:
-        pass
+    candidates: list[str] = [text]
 
     block = _JSON_BLOCK.search(text)
     if block:
-        try:
-            return json.loads(block.group(1))
-        except json.JSONDecodeError:
-            pass
+        candidates.append(block.group(1))
 
     start, end = text.find("{"), text.rfind("}")
     if start != -1 and end > start:
-        try:
-            return json.loads(text[start : end + 1])
-        except json.JSONDecodeError:
-            pass
+        candidates.append(text[start : end + 1])
 
-    raise LLMUnavailable(f"模型输出不是合法 JSON：{text[:200]}")
+    for candidate in candidates:
+        try:
+            data = json.loads(candidate)
+        except json.JSONDecodeError:
+            continue
+        # 必须是对象：数组或标量都不是本模块的契约，直接跳过继续试下一个候选。
+        if isinstance(data, dict):
+            return data
+
+    raise LLMUnavailable(f"模型输出不是合法 JSON 对象：{text[:200]}")
 
 
 class LLM:
@@ -103,11 +108,18 @@ class LLM:
         *,
         temperature: float = 0.1,
     ) -> Any:
-        """Agent 工具调用循环用。返回原始 message 对象，由 client 负责解析。"""
+        """Agent 工具调用循环用。返回原始 message 对象，由 client 负责解析。
+
+        messages / tools 由 client 按 OpenAI 线上格式构造，这里只做转交。
+        用 ``cast`` 收窄到 SDK 的 TypedDict 类型而不是重建对象，是为了避免
+        每次调用都多一层深拷贝；真正的形状由 ``MCPToolkit`` 保证。
+        """
         response = self.client.chat.completions.create(
             model=self.settings.llm_model,
-            messages=messages,
-            tools=tools or None,
+            messages=cast("list[ChatCompletionMessageParam]", messages),
+            # 没有工具时显式省略该字段，比传 None 更安全：部分兼容网关不接受 null。
+            # 用 SDK 的 omit 哨兵（类型为 Omit），而不是 NOT_GIVEN，否则类型对不上。
+            tools=cast("list[ChatCompletionToolParam]", tools) if tools else omit,
             temperature=temperature,
         )
         return response.choices[0].message

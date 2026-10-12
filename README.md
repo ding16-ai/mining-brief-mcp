@@ -1,5 +1,11 @@
 # mining-brief-mcp
 
+[![CI](https://github.com/ding16-ai/mining-brief-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/ding16-ai/mining-brief-mcp/actions/workflows/ci.yml)
+[![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue)](https://www.python.org/)
+[![Checked with mypy](https://www.mypy-lang.org/static/mypy_badge.svg)](https://mypy-lang.org/)
+[![Ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 基于 **MCP（Model Context Protocol）** 的矿权日报 Agent：输入一句自然语言，自动取证并产出一份带引用来源的 Markdown 简报。
 
 ```
@@ -68,7 +74,11 @@ python -m mining_brief.cli serve news    # 单独启动某个 MCP server（stdio
 python -m mining_brief.cli --help
 
 make test      # 运行测试
-make lint      # ruff 静态检查
+make cov       # 运行测试并统计覆盖率
+make lint      # ruff 静态检查 + 格式检查
+make typecheck # mypy 严格模式
+make check     # 提交前全量自检（lint + typecheck + test + 离线自检）
+make ci        # 本地复现 CI（check + 打包校验）
 ```
 
 ## 目录结构
@@ -98,6 +108,28 @@ mining-brief-mcp/
 ├── scripts/make_fixtures.py
 ├── Dockerfile / docker-compose.yml / Makefile
 └── CLAUDE.md
+```
+
+## 工程化
+
+| 维度 | 做法 |
+| --- | --- |
+| **包结构** | `src/` 布局，`pip install -e .` 可安装，`mining-brief` 命令行入口 |
+| **静态检查** | `ruff check`（规则集 `E,F,I,UP,B,SIM`，行宽 100）+ `ruff format --check` |
+| **类型检查** | `mypy --strict`，覆盖 `src` / `tests` / `scripts`，**零问题** |
+| **测试** | 66 项，**全部离线可跑**（不联网、不调模型）；单元测试 + 真实 stdio 集成测试 |
+| **覆盖率** | 65%，CI 中强制 `fail_under = 60` |
+| **CI** | GitHub Actions：Python 3.10/3.11/3.12/3.13 矩阵，lint → typecheck → test → 离线自检 → 打包校验 |
+| **依赖管理** | 全部依赖带版本上界；`mcp` 显式锁 `<2`（原因见 `docs/architecture.md`） |
+| **提交钩子** | `.pre-commit-config.yaml`（ruff + mypy + 通用文件检查 + 私钥检测） |
+| **容器化** | `Dockerfile` + `docker-compose.yml`，`docker compose up --build` 一键起 |
+| **文档** | 架构决策、数据源与已知局限、CHANGELOG、CLAUDE.md（AI 协作者约定） |
+| **协作** | Issue 模板（bug / feature / 数据源问题）、PR 模板（含硬规则自查清单） |
+
+提交前跑一条命令即可对齐 CI：
+
+```bash
+make check    # lint + typecheck + test + 离线自检
 ```
 
 ## 设计要点

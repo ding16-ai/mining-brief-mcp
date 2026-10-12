@@ -16,7 +16,10 @@ data/pdfs/
 
 .pytest_cache/
 .ruff_cache/
+.mypy_cache/
 .coverage
+.coverage.*
+coverage.xml
 htmlcov/
 
 # 生成的简报（示例输出请手动挑选后提交）

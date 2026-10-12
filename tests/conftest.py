@@ -6,13 +6,16 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from pathlib import Path
+
 import pytest
 
 from mining_brief.config import reload_settings
 
 
 @pytest.fixture(autouse=True)
-def offline_env(tmp_path, monkeypatch):
+def offline_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
     monkeypatch.setenv("MINING_BRIEF_OFFLINE", "true")
     monkeypatch.setenv("MINING_BRIEF_CACHE_DIR", str(tmp_path / "cache"))
     monkeypatch.setenv("MINING_BRIEF_DEFAULT_PDF", "")

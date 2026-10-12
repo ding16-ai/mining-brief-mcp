@@ -22,6 +22,7 @@ import hashlib
 import json
 import logging
 from pathlib import Path
+from typing import Any
 
 from mcp.server.fastmcp import FastMCP
 from pydantic import ValidationError
@@ -143,20 +144,35 @@ def _candidate_pages(texts: list[str]) -> list[int]:
     return sorted(idx + 1 for _, idx in scored[:MAX_CANDIDATE_PAGES])
 
 
-def _load_fixture(commodity_hint: str = "") -> dict:
+def _load_fixture(commodity_hint: str = "") -> dict[str, Any]:
+    """读取内置资源量 fixture。
+
+    这个函数位于降级路径上，**它自己绝不能再抛异常**，否则「永不失败」的保证就断了，
+    因此文件缺失、JSON 损坏、顶层不是对象这三种情况都返回同一张空表。
+    """
+    empty: dict[str, Any] = {
+        "project": "",
+        "commodity": commodity_hint,
+        "rows": [],
+        "confidence": 0.0,
+        "warnings": ["无可用 fixture，且未能从 PDF 抽取到数据"],
+    }
     path = FIXTURES_DIR / "resources_pilbara.json"
     if not path.exists():
-        return {
-            "project": "",
-            "commodity": commodity_hint,
-            "rows": [],
-            "confidence": 0.0,
-            "warnings": ["无可用 fixture，且未能从 PDF 抽取到数据"],
-        }
-    return json.loads(path.read_text(encoding="utf-8"))
+        return empty
+    try:
+        payload: Any = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError) as exc:
+        logger.warning("pdf: fixture 读取失败 %s: %s", path.name, exc)
+        empty["warnings"] = [f"fixture 读取失败：{exc}"]
+        return empty
+    if not isinstance(payload, dict):
+        empty["warnings"] = [f"fixture 顶层不是 JSON 对象：{path.name}"]
+        return empty
+    return payload
 
 
-def _normalize_rows(raw_rows: list[dict]) -> tuple[list[ResourceRow], list[str]]:
+def _normalize_rows(raw_rows: list[dict[str, Any]]) -> tuple[list[ResourceRow], list[str]]:
     """单位与数值归一。模型偶尔会给出 % 写进 grade_unit 之外的值，这里统一收口。"""
     rows: list[ResourceRow] = []
     warnings: list[str] = []
@@ -175,7 +191,7 @@ def _normalize_rows(raw_rows: list[dict]) -> tuple[list[ResourceRow], list[str]]
     return rows, warnings
 
 
-def _extract_with_llm(url: str, pages: list[int], texts: list[str]) -> dict:
+def _extract_with_llm(url: str, pages: list[int], texts: list[str]) -> dict[str, Any]:
     llm = LLM()
     if not llm.available:
         raise LLMUnavailable("未配置 LLM_API_KEY")
@@ -209,7 +225,7 @@ def _extract_with_llm(url: str, pages: list[int], texts: list[str]) -> dict:
 
 
 @mcp.tool()
-def extract_resources(pdf_url: str) -> dict:
+def extract_resources(pdf_url: str) -> dict[str, Any]:
     """从 NI 43-101 技术报告 PDF 中抽取 Indicated / Inferred 资源量。
 
     Args:
@@ -247,7 +263,7 @@ def extract_resources(pdf_url: str) -> dict:
 
     key = cache.make_key("pdf", url)
 
-    def loader() -> dict:
+    def loader() -> dict[str, Any]:
         try:
             pdf_path = _download_pdf(url)
             texts = _page_texts(pdf_path)

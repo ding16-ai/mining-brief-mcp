@@ -125,10 +125,10 @@ def _fixture_series(commodity: str, days: int) -> list[dict[str, Any]]:
     path = FIXTURES_DIR / f"price_{commodity}.json"
     if not path.exists():
         raise FileNotFoundError(f"缺少 fixture：{path.name}")
-    payload = json.loads(path.read_text(encoding="utf-8"))
-    points = payload.get("points", [])
-    if not points:
-        raise ValueError(f"{path.name} 不含 points")
+    payload: Any = json.loads(path.read_text(encoding="utf-8"))
+    points = payload.get("points") if isinstance(payload, dict) else None
+    if not isinstance(points, list) or not points:
+        raise ValueError(f"{path.name} 不含有效的 points 数组")
     return points[-days:]
 
 
@@ -195,7 +195,7 @@ def _series(commodity: str, days: int) -> dict[str, Any]:
 
 
 @mcp.tool()
-def get_price(commodity: str, date: str | None = None) -> dict:
+def get_price(commodity: str, date: str | None = None) -> dict[str, Any]:
     """取某个品种在指定日期（或最近交易日）的报价。
 
     Args:
@@ -250,7 +250,7 @@ def get_price(commodity: str, date: str | None = None) -> dict:
 
 
 @mcp.tool()
-def get_trend(commodity: str, days: int = 30) -> dict:
+def get_trend(commodity: str, days: int = 30) -> dict[str, Any]:
     """取某品种最近 N 天的价格走势。
 
     Args:

@@ -10,7 +10,7 @@ from mining_brief.agent.brief import (
 from mining_brief.models import ResourceRow, ResourceTable, TrendPoint, TrendSeries
 
 
-def test_resource_table_total_ore():
+def test_resource_table_total_ore() -> None:
     table = ResourceTable(
         project="Demo",
         rows=[
@@ -21,7 +21,7 @@ def test_resource_table_total_ore():
     assert table.total_ore_mt == 150.0
 
 
-def test_resource_row_rejects_bad_category():
+def test_resource_row_rejects_bad_category() -> None:
     import pytest
     from pydantic import ValidationError
 
@@ -29,7 +29,7 @@ def test_resource_row_rejects_bad_category():
         ResourceRow(category="NotACategory", ore_mt=1.0)  # type: ignore[arg-type]
 
 
-def test_build_citations_dedupes_and_classifies():
+def test_build_citations_dedupes_and_classifies() -> None:
     evidence = {
         "news": [
             {"title": "a", "url": "https://example.com/a", "source": "mining.com"},
@@ -48,7 +48,7 @@ def test_build_citations_dedupes_and_classifies():
     assert {c.kind for c in citations} == {"news", "pdf", "price"}
 
 
-def test_fallback_brief_flags_proxy_price():
+def test_fallback_brief_flags_proxy_price() -> None:
     evidence = {
         "subject": "Pilbara 锂矿",
         "news": [],
@@ -77,7 +77,7 @@ def test_fallback_brief_flags_proxy_price():
     assert "引用来源" in markdown
 
 
-def test_fallback_brief_handles_empty_evidence():
+def test_fallback_brief_handles_empty_evidence() -> None:
     evidence = {
         "subject": "X 矿",
         "news": [],

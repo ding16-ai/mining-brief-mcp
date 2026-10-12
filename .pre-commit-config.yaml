@@ -1,0 +1,44 @@
+# 提交前自动检查。安装：pre-commit install
+#
+# 设计取舍：ruff 与通用文件检查走官方 hook（隔离环境，版本由 rev 固定）；
+# mypy 走 local hook，直接使用项目虚拟环境里的依赖 —— 否则要在 pre-commit
+# 的隔离环境里把 mcp / pydantic / openai 重装一遍，既慢又容易版本漂移。
+
+default_language_version:
+  python: python3
+
+ci:
+  autofix_prs: false
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ["--maxkb=2048"]
+      # .env 里是 LLM API key，这个钩子能拦住误提交
+      - id: detect-private-key
+      - id: mixed-line-ending
+        args: ["--fix=lf"]
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.17.0
+    hooks:
+      - id: ruff
+        args: ["--fix"]
+      - id: ruff-format
+
+  - repo: local
+    hooks:
+      - id: mypy
+        name: mypy (strict)
+        entry: python -m mypy
+        language: system
+        types: [python]
+        pass_filenames: false

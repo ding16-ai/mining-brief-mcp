@@ -20,7 +20,7 @@ EXPECTED_TOOLS = {
 
 
 @pytest.mark.asyncio
-async def test_three_servers_start_and_expose_tools():
+async def test_three_servers_start_and_expose_tools() -> None:
     async with MCPToolkit() as toolkit:
         assert toolkit.failed_servers == [], f"server 启动失败：{toolkit.failed_servers}"
         assert toolkit.server_names == ["news", "pdf", "price"]
@@ -28,7 +28,7 @@ async def test_three_servers_start_and_expose_tools():
 
 
 @pytest.mark.asyncio
-async def test_news_search_offline_falls_back_to_fixture():
+async def test_news_search_offline_falls_back_to_fixture() -> None:
     async with MCPToolkit() as toolkit:
         result = await toolkit.call("search", {"query": "Pilbara lithium", "days": 7})
     assert isinstance(result, list) and result, "离线模式应返回 fixture 中的示例新闻"
@@ -36,7 +36,7 @@ async def test_news_search_offline_falls_back_to_fixture():
 
 
 @pytest.mark.asyncio
-async def test_price_trend_offline_has_points_and_change():
+async def test_price_trend_offline_has_points_and_change() -> None:
     async with MCPToolkit() as toolkit:
         trend = await toolkit.call("get_trend", {"commodity": "锂", "days": 30})
     assert trend.get("commodity") == "lithium", "中文别名应被归一化"
@@ -45,14 +45,14 @@ async def test_price_trend_offline_has_points_and_change():
 
 
 @pytest.mark.asyncio
-async def test_price_unknown_commodity_returns_error_not_exception():
+async def test_price_unknown_commodity_returns_error_not_exception() -> None:
     async with MCPToolkit() as toolkit:
         result = await toolkit.call("get_price", {"commodity": "unobtainium"})
     assert "error" in result
 
 
 @pytest.mark.asyncio
-async def test_extract_resources_offline_returns_table_shape():
+async def test_extract_resources_offline_returns_table_shape() -> None:
     async with MCPToolkit() as toolkit:
         table = await toolkit.call(
             "extract_resources", {"pdf_url": "https://example.com/ni43-101.pdf"}

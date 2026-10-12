@@ -8,7 +8,7 @@ import json
 import time
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any, TypeVar
+from typing import Any, TypeVar, cast
 
 from mining_brief.config import get_settings
 
@@ -57,7 +57,8 @@ def cached(key: str, loader: Callable[[], T], ttl: int | None = None) -> T:
     """
     hit = read(key, ttl)
     if hit is not None:
-        return hit  # type: ignore[return-value]
+        # 缓存里的 JSON 本来就是当初 write 进去的 T，这里只是把 Any 收窄回 T。
+        return cast("T", hit)
     value = loader()
     if value is not None:
         write(key, value)

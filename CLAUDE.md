@@ -26,9 +26,13 @@ python -m mining_brief.cli brief "生成一份关于 Pilbara 锂矿的今日简�
 python -m mining_brief.cli tools                    # 列出各 server 的工具
 python -m mining_brief.cli serve news|pdf|price     # 单独起一个 server
 
-pytest -q
+pytest -q                                           # 全部测试（离线）
+pytest --cov=mining_brief --cov-report=term-missing # 带覆盖率
 ruff check . && ruff format .
+mypy                                                # 严格模式，必须零问题
 python scripts/make_fixtures.py                     # 重新生成离线 fixture
+
+make check                                          # 上面几项一次跑完
 ```
 
 ## 目录约定
@@ -60,12 +64,14 @@ tests/          # 默认离线；需要联网的测试请显式标注
 6. **测试必须能离线跑**。CI 环境无外网、无 API key，新增测试不要依赖网络或模型。
 7. **MCP 工具签名是契约**。`search` / `fetch_article` / `extract_resources` /
    `get_price` / `get_trend` 的名字与参数不可随意改动，README 与配置都依赖它们。
+8. **类型必须过 mypy strict**。新增代码不要用裸 `dict`、`Any` 或 `type: ignore` 逃逸；
+   确实需要收窄时优先用 `cast` 并写明原因。CI 会拦。
 
 ## 代码风格
 
 - 行宽 100，ruff 规则集 `E,F,I,UP,B,SIM`
 - 公开函数写中文 docstring，说明「做什么」与「失败时怎样」
-- 类型注解尽量完整；`from __future__ import annotations` 统一加在文件头
+- 类型注解必须完整（mypy strict 强制），`from __future__ import annotations` 统一加在文件头
 - 注释解释**为什么**，不解释**是什么**
 
 ## 新增一个 MCP server 的步骤
@@ -79,7 +85,13 @@ tests/          # 默认离线；需要联网的测试请显式标注
 ## 提交前自检
 
 ```bash
-ruff check . && pytest -q && python -m mining_brief.cli --offline selftest
+make check    # = ruff check + ruff format --check + mypy + pytest + 离线 selftest
 ```
 
-三项全绿再提交。
+四项全绿再提交。改动涉及打包时另跑 `make build`（会校验 fixture 是否打进 wheel）。
+
+## CI
+
+`.github/workflows/ci.yml` 三个 job：`lint`（ruff + mypy）、`test`（Python 3.10~3.13 矩阵）、
+`build`（打包 + wheel 内 fixture 校验 + 装 wheel 后跑离线自检）。
+本地用 `make ci` 复现。新增依赖记得同时更新 `pyproject.toml` 的上界。

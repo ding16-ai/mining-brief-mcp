@@ -13,6 +13,7 @@ import math
 import random
 from datetime import date, timedelta
 from pathlib import Path
+from typing import Any
 
 FIXTURES = Path(__file__).resolve().parents[1] / "src" / "mining_brief" / "fixtures"
 
@@ -30,10 +31,10 @@ SPECS: dict[str, tuple[float, float, str, str]] = {
 DAYS = 60
 
 
-def build_series(commodity: str) -> dict:
+def build_series(commodity: str) -> dict[str, Any]:
     start_price, vol, unit, note = SPECS[commodity]
     rng = random.Random(f"mining-brief-{commodity}")
-    points: list[dict] = []
+    points: list[dict[str, Any]] = []
     price = start_price
     today = date.today()
     for offset in range(DAYS, 0, -1):
